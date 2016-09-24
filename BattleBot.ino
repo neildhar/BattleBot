@@ -1,5 +1,6 @@
 #include <Wire.h>
 #include "HMC5883L.h"
+//hi
 
 HMC5883L compass;
 void setup(){

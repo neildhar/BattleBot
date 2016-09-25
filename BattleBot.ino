@@ -19,7 +19,7 @@ unsigned long long lastTime;
 int lastError, errorTotal;
 
 int sign(int n){
-    return n>0?1:(n<0?-1:0);
+    return n==0?0:n/abs(n);
 }
 
 void updateBearings(){

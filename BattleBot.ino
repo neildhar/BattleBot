@@ -1,13 +1,15 @@
 #include <Wire.h>
 #include "HMC5883L.h"
 #include "AFMotor.h"
+#define compScaler 4
+
 
 HMC5883L compass;
 AF_DCMotor leftMotor(3, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 
 
-int XPos, YPos;
+int XPos, YPos, motSpeed;
 int targetX, targetY;
 double trueBearing, relBearing, fieldBearing;
 int compOffset = 0, targetBearingOffset = 0;
@@ -57,9 +59,8 @@ void loop(){
     updateBearings();
     //targetBearingOffset = getDir(targetX, targetY);
     if(abs(relBearing)>10){
-        int motSpeed = (double)1.41666*abs(relBearing);
+        motSpeed = constrain((double)compScaler*abs(relBearing),0,255);
         if(relBearing>0){
-            motSpeed = 1.41666*relBearing;
             leftMotor.setSpeed(motSpeed);
             rightMotor.setSpeed(motSpeed);
             leftMotor.run(BACKWARD);
@@ -67,16 +68,16 @@ void loop(){
         }
 
         else if (relBearing<0){
-            motSpeed = 1.41666*relBearing;
             leftMotor.setSpeed(motSpeed);
             rightMotor.setSpeed(motSpeed);
             leftMotor.run(FORWARD);
             rightMotor.run(BACKWARD);
         }
+        Serial.println(relBearing);
     }
     else if(XPos!=targetX || YPos != targetY){
-        leftMotor.setSpeed(motSpeed-1.41666*relBearing);
-        rightMotor.setSpeed(motSpeed+1.41666*relBearing);
+        leftMotor.setSpeed(motSpeed-compScaler*relBearing);
+        rightMotor.setSpeed(motSpeed+compScaler*relBearing);
         leftMotor.run(FORWARD);
         rightMotor.run(FORWARD);
     }

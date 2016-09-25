@@ -1,7 +1,8 @@
 #include <Wire.h>
 #include "HMC5883L.h"
 #include "AFMotor.h"
-#define compScaler 4
+#define compScaler 3
+#define compKi 0.05
 
 
 HMC5883L compass;
@@ -14,16 +15,22 @@ int targetX, targetY;
 double trueBearing, relBearing, fieldBearing;
 int compOffset = 0, targetBearingOffset = 0;
 Vector data;
+unsigned long long lastTime;
+int lastError, errorTotal;
+
+int sign(int n){
+    return n>0?1:(n<0?-1:0);
+}
 
 void updateBearings(){
     data  = compass.readNormalize();
     trueBearing  = (data.YAxis!=0) ? atan2(data.XAxis, data.YAxis)/0.0174532925 : (data.XAxis>0 ? 0.0 : 180.0);
     
     fieldBearing = trueBearing - compOffset;
-    fieldBearing = fieldBearing<-180?360+fieldBearing:(fieldBearing>180?fieldBearing+360:fieldBearing);
+    fieldBearing = fieldBearing<-180?360+fieldBearing:(fieldBearing>180?fieldBearing-360:fieldBearing);
     
     relBearing = fieldBearing - targetBearingOffset;
-    relBearing = relBearing<-180?360+relBearing:(relBearing>180?relBearing+360:relBearing);
+    relBearing = relBearing<-180?360+relBearing:(relBearing>180?relBearing-360:relBearing);
 }
 
 int getDir(int x, int y){
@@ -59,7 +66,11 @@ void loop(){
     updateBearings();
     //targetBearingOffset = getDir(targetX, targetY);
     if(abs(relBearing)>10){
-        motSpeed = constrain((double)compScaler*abs(relBearing),0,255);
+        if(sign(relBearing)!=sign(lastError))
+            errorTotal=0;
+ 
+        errorTotal += abs(relBearing)*(millis()-lastTime);
+        motSpeed = constrain((double)compScaler*abs(relBearing),0,255)+errorTotal*compKi;
         if(relBearing>0){
             leftMotor.setSpeed(motSpeed);
             rightMotor.setSpeed(motSpeed);
@@ -73,9 +84,12 @@ void loop(){
             leftMotor.run(FORWARD);
             rightMotor.run(BACKWARD);
         }
+        lastTime = millis();
+        lastError = relBearing;
         Serial.println(relBearing);
     }
     else if(XPos!=targetX || YPos != targetY){
+        motSpeed = 200;
         leftMotor.setSpeed(motSpeed-compScaler*relBearing);
         rightMotor.setSpeed(motSpeed+compScaler*relBearing);
         leftMotor.run(FORWARD);

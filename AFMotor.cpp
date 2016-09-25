@@ -399,6 +399,21 @@ void AF_DCMotor::run(uint8_t cmd) {
   }
 }
 
+void AF_DCMotor::runWrapper(int spd){
+    if(spd<0){
+        this->setSpeed(constrain(abs(spd),0,255));
+        this->run(BACKWARD);
+    }
+    else if(spd>0){
+        this->setSpeed(constrain(abs(spd),0,255));
+        this->run(FORWARD);
+    }
+    else if(spd==0){
+        this->setSpeed(0);
+        this->run(RELEASE);
+    }
+}
+
 void AF_DCMotor::setSpeed(uint8_t speed) {
   switch (motornum) {
   case 1:

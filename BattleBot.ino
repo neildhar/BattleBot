@@ -10,8 +10,8 @@ AF_DCMotor leftMotor(3, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 
 
-int XPos, YPos, motSpeed;
-int targetX, targetY;
+int XPos=0, YPos=0, motSpeed;
+int targetX=0, targetY=0;
 double trueBearing, relBearing, fieldBearing;
 int compOffset = 0, targetBearingOffset = 0;
 Vector data;
@@ -57,6 +57,7 @@ void setup(){
         Serial.println("Could not find a valid HMC5883L sensor, check wiring!");
         delay(50);
     }
+    compass.setSamples(HMC5883L_SAMPLES_4);
 }
 
 void loop(){
@@ -69,35 +70,22 @@ void loop(){
         if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
  
-        errorTotal += abs(relBearing)*(millis()-lastTime);
-        motSpeed = constrain((double)compScaler*abs(relBearing),0,255)+errorTotal*compKi;
-        if(relBearing>0){
-            leftMotor.setSpeed(motSpeed);
-            rightMotor.setSpeed(motSpeed);
-            leftMotor.run(BACKWARD);
-            rightMotor.run(FORWARD);
-        }
-
-        else if (relBearing<0){
-            leftMotor.setSpeed(motSpeed);
-            rightMotor.setSpeed(motSpeed);
-            leftMotor.run(FORWARD);
-            rightMotor.run(BACKWARD);
-        }
+        errorTotal += relBearing*(millis()-lastTime);
+        motSpeed = compScaler*relBearing+errorTotal*compKi;
+        leftMotor.runWrapper(-motSpeed);
+        rightMotor.runWrapper(motSpeed);
         lastTime = millis();
         lastError = relBearing;
         Serial.println(relBearing);
     }
     else if(XPos!=targetX || YPos != targetY){
         motSpeed = 200;
-        leftMotor.setSpeed(motSpeed-compScaler*relBearing);
-        rightMotor.setSpeed(motSpeed+compScaler*relBearing);
-        leftMotor.run(FORWARD);
-        rightMotor.run(FORWARD);
+        leftMotor.runWrapper(motSpeed-compScaler*relBearing);
+        rightMotor.runWrapper(motSpeed+compScaler*relBearing);
     }
     else{
-        leftMotor.run(RELEASE);
-        rightMotor.run(RELEASE);
+        leftMotor.runWrapper(0);
+        rightMotor.runWrapper(0);
     }
 }
 

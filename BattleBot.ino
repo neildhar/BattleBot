@@ -70,8 +70,8 @@ void loop(){
         if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
  
-        errorTotal += relBearing*(millis()-lastTime);
-        motSpeed = compScaler*relBearing+errorTotal*compKi;
+        errorTotal = constrain(errorTotal+compKi*double(relBearing*(millis()-lastTime)),-255,255);
+        motSpeed = compScaler*relBearing+errorTotal;
         leftMotor.runWrapper(-motSpeed);
         rightMotor.runWrapper(motSpeed);
         lastTime = millis();

@@ -1,8 +1,9 @@
 #include <Wire.h>
 #include "HMC5883L.h"
 #include "AFMotor.h"
-#define compScaler 3
+#define compKp 3
 #define compKi 0.05
+#define compKd 0.01
 
 
 HMC5883L compass;
@@ -10,13 +11,15 @@ AF_DCMotor leftMotor(3, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 
 
-int XPos=0, YPos=0, motSpeed;
+int XPos=0, YPos=0, motSpeed, compAlignSpeed;
 int targetX=0, targetY=0;
 double trueBearing, relBearing, fieldBearing;
 int compOffset = 0, targetBearingOffset = 0;
 Vector data;
 unsigned long long lastTime;
-int lastError, errorTotal;
+int lastError;
+long long int errorTotal;
+long int dt;
 
 int sign(int n){
     return n==0?0:n/abs(n);
@@ -66,22 +69,22 @@ void loop(){
     //SET COURSE
     updateBearings();
     //targetBearingOffset = getDir(targetX, targetY);
-    if(abs(relBearing)>10){
-        if(sign(relBearing)!=sign(lastError))
+    if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
- 
-        errorTotal = constrain(errorTotal+compKi*double(relBearing*(millis()-lastTime)),-255,255);
-        motSpeed = compScaler*relBearing+errorTotal;
-        leftMotor.runWrapper(-motSpeed);
-        rightMotor.runWrapper(motSpeed);
+        dt = millis()-lastTime;
+        errorTotal += relBearing*dt;
+        compAlignSpeed = compKp*relBearing+compKi*errorTotal+compKd*((relBearing-lastError)/dt);
         lastTime = millis();
         lastError = relBearing;
         Serial.println(relBearing);
+    if(abs(relBearing)>10){
+        leftMotor.runWrapper(-compAlignSpeed);
+        rightMotor.runWrapper(compAlignSpeed);
     }
     else if(XPos!=targetX || YPos != targetY){
         motSpeed = 200;
-        leftMotor.runWrapper(motSpeed-compScaler*relBearing);
-        rightMotor.runWrapper(motSpeed+compScaler*relBearing);
+        leftMotor.runWrapper(motSpeed-compAlignSpeed);
+        rightMotor.runWrapper(motSpeed+compAlignSpeed);
     }
     else{
         leftMotor.runWrapper(0);

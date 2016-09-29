@@ -44,7 +44,7 @@ int getDir(int x, int y){
         return dx>0?90:-90;
     else if(dx==0)
         return dy>0?0:180;
-    int basic = abs(atan2(dy,dx));
+    int basic = abs(atan2(dy,dx)/0.0174532925);
     if(dy>0 && dx >0)
         return 90-basic;
     else if(dx<0 && dy>0)
@@ -71,12 +71,12 @@ void loop(){
     //targetBearingOffset = getDir(targetX, targetY);
     if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
-        dt = millis()-lastTime;
-        errorTotal += relBearing*dt;
-        compAlignSpeed = compKp*relBearing+compKi*errorTotal+compKd*((relBearing-lastError)/dt);
-        lastTime = millis();
-        lastError = relBearing;
-        Serial.println(relBearing);
+    dt = millis()-lastTime;
+    errorTotal += relBearing*dt;
+    compAlignSpeed = compKp*relBearing+compKi*errorTotal+compKd*((relBearing-lastError)/dt);
+    lastTime = millis();
+    lastError = relBearing;
+    Serial.println(relBearing);
     if(abs(relBearing)>10){
         leftMotor.runWrapper(-compAlignSpeed);
         rightMotor.runWrapper(compAlignSpeed);

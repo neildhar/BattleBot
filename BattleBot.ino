@@ -1,16 +1,20 @@
 #include <Wire.h>
+#include "ChinaBee.h"
+#include <SPI.h>  
 #include "HMC5883L.h"
 #include "AFMotor.h"
+
+#define myTeamNumber 1
 #define compKp 1.5
 #define compKi 0.01
 #define compKd .005
 
-
+ChinaBee bee;
 HMC5883L compass;
 AF_DCMotor leftMotor(3, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
-AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
+AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm.
 
-
+int botCoordinates[4][2] = {{0,0}, {0,0}, {0,0}, {0,0}};
 int XPos=0, YPos=0, motSpeed, compAlignSpeed;
 int targetX=0, targetY=0;
 double trueBearing, relBearing, fieldBearing;
@@ -54,6 +58,30 @@ int getDir(int x, int y){
     else if(dx<0 && dy<0)
         return -90-basic;
 }
+
+void updateCoordinates(){
+    bee.update();
+    for (int i=0; i<bee.get_num_teams(); i++) {
+      team_status_t* stat = bee.get_status(i);
+      if (stat->haveFound || true) {
+        Serial.print("Team ");
+        Serial.print(i);
+        Serial.print(" ");
+        Serial.print(stat->x);
+        Serial.print(" ");
+        Serial.print(stat->y);
+        Serial.print(" time since (ms): ");
+        Serial.println(millis() - stat->timestamp);
+        teamCoordinates[i][0] = stat->y;
+        teamCoordinates[i][1] = stat->y;  
+        if (i == myTeamNumber){
+           YPos = stat->y;
+           XPos = stat->x;
+  
+        }
+      }
+  }
+}
 void setup(){
     Serial.begin(9600);
     while (!compass.begin()){
@@ -61,22 +89,28 @@ void setup(){
         delay(50);
     }
     compass.setSamples(HMC5883L_SAMPLES_4);
+    bee.init(48, 49);
 }
 
 void loop(){
-    //READ DATA FROM RECEIVER HERE
-    //CHECK FOR RED LINES AND USE RECEIVER DATA
-    //SET COURSE
+    updateCoordinates();
     updateBearings();
-    //targetBearingOffset = getDir(targetX, targetY);
+ //   targetBearingOffset = getDir(targetX, targetY);
     if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
     dt = millis()-lastTime;
     errorTotal += relBearing*dt;
     compAlignSpeed = compKp*relBearing+compKi*errorTotal+compKd*((relBearing-lastError)/dt);
+ /*   Serial.print(compKp*relBearing);
+    Serial.print(" ");
+    Serial.print(compKi*errorTotal);
+    Serial.print(" ");
+
+    Serial.println(compKd*((relBearing-lastError)/dt));
+*/
     lastTime = millis();
     lastError = relBearing;
-    Serial.println(relBearing);
+    
     if(abs(relBearing)>10){
         leftMotor.runWrapper(-compAlignSpeed);
         rightMotor.runWrapper(compAlignSpeed);

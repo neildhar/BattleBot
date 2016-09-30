@@ -1,9 +1,9 @@
 #include <Wire.h>
 #include "HMC5883L.h"
 #include "AFMotor.h"
-#define compKp 3
-#define compKi 0.05
-#define compKd 0.01
+#define compKp 1.5
+#define compKi 0.01
+#define compKd .005
 
 
 HMC5883L compass;

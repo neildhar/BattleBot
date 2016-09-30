@@ -1,3 +1,4 @@
+//what's up neil
 #include <Wire.h>
 #include "ChinaBee.h"
 #include <SPI.h>  
@@ -8,6 +9,7 @@
 #define compKp 1.5
 #define compKi 0.01
 #define compKd .005
+
 
 ChinaBee bee;
 HMC5883L compass;

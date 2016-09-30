@@ -68,14 +68,14 @@ void updateCoordinates(){
     for (int i=0; i<bee.get_num_teams(); i++) {
       team_status_t* stat = bee.get_status(i);
       if (stat->haveFound || true) {
-        Serial.print("Team ");
+   /*     Serial.print("Team ");
         Serial.print(i);
         Serial.print(" ");
         Serial.print(stat->x);
         Serial.print(" ");
         Serial.print(stat->y);
         Serial.print(" time since (ms): ");
-        Serial.println(millis() - stat->timestamp);
+        Serial.println(millis() - stat->timestamp); */
         botCoordinates[i][0] = stat->y;
         botCoordinates[i][1] = stat->y;  
         if (i == myTeamNumber){
@@ -110,9 +110,18 @@ void setup(){
 }
 
 void loop(){
+
+
   
     updateCoordinates();
     updateBearings();
+
+    if (triggeredSensor != -1){
+      Serial.print("The bot is over the line at ");
+      Serial.println(triggeredSensor);
+      triggeredSensor = -1;
+    }
+    
  //   targetBearingOffset = getDir(targetX, targetY);
     if(sign(relBearing)!=sign(lastError))
             errorTotal=0;

@@ -5,7 +5,7 @@
 #include "HMC5883L.h"
 #include "AFMotor.h"
 
-#define myTeamNumber 1
+#define myTeamNumber 1 
 #define compKp 1.5
 #define compKi 0.01
 #define compKd .005
@@ -17,7 +17,7 @@ AF_DCMotor leftMotor(3, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm.
 
 int lineSensors[4] = {2, 3, 18, 19};
-int triggeredSensor = -1;
+int triggeredSensor = -1; 
 int botCoordinates[4][2] = {{0,0}, {0,0}, {0,0}, {0,0}};
 int XPos=0, YPos=0, motSpeed, compAlignSpeed;
 int targetX=0, targetY=0;
@@ -87,6 +87,7 @@ void updateCoordinates(){
   }
 }
 
+//interupt functions for four line sensors
 void onLine0() { triggeredSensor = 0; }
 void onLine1() { triggeredSensor = 1; }
 void onLine2() { triggeredSensor = 2; }

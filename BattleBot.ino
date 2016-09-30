@@ -16,6 +16,8 @@ HMC5883L compass;
 AF_DCMotor leftMotor(3, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm.
 
+int lineSensors[4] = {2, 3, 18, 19};
+int triggeredSensor = -1;
 int botCoordinates[4][2] = {{0,0}, {0,0}, {0,0}, {0,0}};
 int XPos=0, YPos=0, motSpeed, compAlignSpeed;
 int targetX=0, targetY=0;
@@ -74,8 +76,8 @@ void updateCoordinates(){
         Serial.print(stat->y);
         Serial.print(" time since (ms): ");
         Serial.println(millis() - stat->timestamp);
-        teamCoordinates[i][0] = stat->y;
-        teamCoordinates[i][1] = stat->y;  
+        botCoordinates[i][0] = stat->y;
+        botCoordinates[i][1] = stat->y;  
         if (i == myTeamNumber){
            YPos = stat->y;
            XPos = stat->x;
@@ -84,6 +86,12 @@ void updateCoordinates(){
       }
   }
 }
+
+void onLine0() { triggeredSensor = 0; }
+void onLine1() { triggeredSensor = 1; }
+void onLine2() { triggeredSensor = 2; }
+void onLine3() { triggeredSensor = 3; }
+
 void setup(){
     Serial.begin(9600);
     while (!compass.begin()){
@@ -92,9 +100,16 @@ void setup(){
     }
     compass.setSamples(HMC5883L_SAMPLES_4);
     bee.init(48, 49);
+    
+    attachInterrupt(digitalPinToInterrupt(lineSensors[0]), onLine0, FALLING);
+    attachInterrupt(digitalPinToInterrupt(lineSensors[1]), onLine1, FALLING);
+    attachInterrupt(digitalPinToInterrupt(lineSensors[2]), onLine2, FALLING);
+    attachInterrupt(digitalPinToInterrupt(lineSensors[3]), onLine3, FALLING);
+
 }
 
 void loop(){
+  
     updateCoordinates();
     updateBearings();
  //   targetBearingOffset = getDir(targetX, targetY);

@@ -5,9 +5,9 @@
 #include "AFMotor.h"
 
 #define myTeamNumber 0 
-#define compKp 1.4
-#define compKi 0 //0.014
-#define compKd 0 //.08
+#define compKp 1.7
+#define compKi 0.0035
+#define compKd 0.005
 #define compXMax 280
 #define compXMin -80
 #define compYMax 180
@@ -24,6 +24,7 @@ int triggeredSensor = -1;
 int botCoordinates[4][2];
 int XPos=0, YPos=0, motSpeed, compAlignSpeed;
 double targetX=-175, targetY=103;
+//double targetX=0, targetY=0;
 double trueBearing, relBearing, fieldBearing;
 int compOffset = 180, targetBearingOffset = 0;
 Vector data;
@@ -111,7 +112,7 @@ void setup(){
     }
     compass.setOffset(-((compXMin+compXMax)/2), -((compYMin+compYMax)/2));
     compass.setScale((compXMax-compXMin)/2, (compYMax-compYMin)/2);
-    compass.setSamples(HMC5883L_SAMPLES_4);
+    compass.setSamples(HMC5883L_SAMPLES_1);
     bee.init(48, 49);
     
     attachInterrupt(digitalPinToInterrupt(lineSensors[0]), onLine0, CHANGE);
@@ -151,14 +152,14 @@ void loop(){
     lastTime = millis();
     lastError = relBearing;
     
-    if(abs(relBearing)>20){
+    if(abs(relBearing)>30){
         leftMotor.runWrapper(compAlignSpeed);
         rightMotor.runWrapper(-compAlignSpeed);
     }
     else if(XPos!=targetX || YPos != targetY){
         motSpeed = 200;
-        leftMotor.runWrapper(-motSpeed+compAlignSpeed);
-        rightMotor.runWrapper(-motSpeed-compAlignSpeed);
+        leftMotor.runWrapper((-motSpeed+2*compAlignSpeed));
+        rightMotor.runWrapper((-motSpeed-2*compAlignSpeed));
     }
     else{
         leftMotor.runWrapper(0);

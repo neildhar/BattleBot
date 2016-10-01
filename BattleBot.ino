@@ -5,10 +5,10 @@
 #include "HMC5883L.h"
 #include "AFMotor.h"
 
-#define myTeamNumber 1 
-#define compKp 1.5
-#define compKi 0.01
-#define compKd .005
+#define myTeamNumber 0 
+#define compKp 1.4
+#define compKi 0.014
+#define compKd .08
 
 
 ChinaBee bee;
@@ -16,11 +16,11 @@ HMC5883L compass;
 AF_DCMotor leftMotor(3, MOTOR12_64KHZ); // create motor #2, 64KHz pwm
 AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm.
 
-int lineSensors[4] = {2, 3, 18, 19};
+int lineSensors[4] = {A15, 56, 18, 19};
 int triggeredSensor = -1; 
 int botCoordinates[4][2] = {{0,0}, {0,0}, {0,0}, {0,0}};
 int XPos=0, YPos=0, motSpeed, compAlignSpeed;
-int targetX=0, targetY=0;
+double targetX=175, targetY=103;
 double trueBearing, relBearing, fieldBearing;
 int compOffset = 0, targetBearingOffset = 0;
 Vector data;
@@ -68,14 +68,19 @@ void updateCoordinates(){
     for (int i=0; i<bee.get_num_teams(); i++) {
       team_status_t* stat = bee.get_status(i);
       if (stat->haveFound || true) {
-   /*     Serial.print("Team ");
+ 
+
+        if (i == 0){
+            Serial.print("Team ");
         Serial.print(i);
         Serial.print(" ");
         Serial.print(stat->x);
         Serial.print(" ");
         Serial.print(stat->y);
         Serial.print(" time since (ms): ");
-        Serial.println(millis() - stat->timestamp); */
+        Serial.println(millis() - stat->timestamp); 
+        }
+        
         botCoordinates[i][0] = stat->y;
         botCoordinates[i][1] = stat->y;  
         if (i == myTeamNumber){
@@ -102,10 +107,10 @@ void setup(){
     compass.setSamples(HMC5883L_SAMPLES_4);
     bee.init(48, 49);
     
-    attachInterrupt(digitalPinToInterrupt(lineSensors[0]), onLine0, FALLING);
-    attachInterrupt(digitalPinToInterrupt(lineSensors[1]), onLine1, FALLING);
-    attachInterrupt(digitalPinToInterrupt(lineSensors[2]), onLine2, FALLING);
-    attachInterrupt(digitalPinToInterrupt(lineSensors[3]), onLine3, FALLING);
+    attachInterrupt(digitalPinToInterrupt(lineSensors[0]), onLine0, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(lineSensors[1]), onLine1, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(lineSensors[2]), onLine2, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(lineSensors[3]), onLine3, CHANGE);
 
 }
 
@@ -122,19 +127,19 @@ void loop(){
       triggeredSensor = -1;
     }
     
- //   targetBearingOffset = getDir(targetX, targetY);
+    targetBearingOffset = getDir(targetX, targetY);
     if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
     dt = millis()-lastTime;
     errorTotal += relBearing*dt;
     compAlignSpeed = compKp*relBearing+compKi*errorTotal+compKd*((relBearing-lastError)/dt);
- /*   Serial.print(compKp*relBearing);
+/*    Serial.print(compKp*relBearing);
     Serial.print(" ");
     Serial.print(compKi*errorTotal);
     Serial.print(" ");
 
-    Serial.println(compKd*((relBearing-lastError)/dt));
-*/
+    Serial.println(compKd*((relBearing-lastError)/dt));*/
+
     lastTime = millis();
     lastError = relBearing;
     

@@ -100,6 +100,7 @@ class HMC5883L
 	Vector readNormalize(void);
 
 	void  setOffset(int xo, int yo);
+    void  setScale(int xs, int ys);
 
 	void  setRange(hmc5883l_range_t range);
 	hmc5883l_range_t getRange(void);
@@ -118,6 +119,7 @@ class HMC5883L
 	float mgPerDigit;
 	Vector v;
 	int xOffset, yOffset;
+    int xScale=1, yScale = 1;
 
 	void writeRegister8(uint8_t reg, uint8_t value);
 	uint8_t readRegister8(uint8_t reg);

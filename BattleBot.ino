@@ -1,4 +1,3 @@
-//what's up neil dhar
 #include <Wire.h>
 #include "ChinaBee.h"
 #include <SPI.h>  
@@ -7,8 +6,12 @@
 
 #define myTeamNumber 0 
 #define compKp 1.4
-#define compKi 0.014
-#define compKd .08
+#define compKi 0 //0.014
+#define compKd 0 //.08
+#define compXMax 280
+#define compXMin -80
+#define compYMax 180
+#define compYMin -170
 
 
 ChinaBee bee;
@@ -18,11 +21,11 @@ AF_DCMotor rightMotor(4, MOTOR12_64KHZ); // create motor #2, 64KHz pwm.
 
 int lineSensors[4] = {A15, 56, 18, 19};
 int triggeredSensor = -1; 
-int botCoordinates[4][2] = {{0,0}, {0,0}, {0,0}, {0,0}};
+int botCoordinates[4][2];
 int XPos=0, YPos=0, motSpeed, compAlignSpeed;
-double targetX=175, targetY=103;
+double targetX=-175, targetY=103;
 double trueBearing, relBearing, fieldBearing;
-int compOffset = 0, targetBearingOffset = 0;
+int compOffset = 180, targetBearingOffset = 0;
 Vector data;
 unsigned long long lastTime;
 int lastError;
@@ -34,11 +37,13 @@ int sign(int n){
 }
 
 void updateBearings(){
-    data  = compass.readNormalize();
-    trueBearing  = (data.YAxis!=0) ? atan2(data.XAxis, data.YAxis)/0.0174532925 : (data.XAxis>0 ? 0.0 : 180.0);
+    //data  = compass.readRaw();
+    //Serial.print(data.XAxis); Serial.print(" "); Serial.println(data.YAxis);
+    data = compass.readNormalize();
+    trueBearing  = -((data.YAxis!=0) ? atan2(data.XAxis, data.YAxis)/0.0174532925 : (data.XAxis>0 ? 0.0 : 180.0));
     
     fieldBearing = trueBearing - compOffset;
-    fieldBearing = fieldBearing<-180?360+fieldBearing:(fieldBearing>180?fieldBearing-360:fieldBearing);
+    fieldBearing = (fieldBearing<-180?360+fieldBearing:(fieldBearing>180?fieldBearing-360:fieldBearing));
     
     relBearing = fieldBearing - targetBearingOffset;
     relBearing = relBearing<-180?360+relBearing:(relBearing>180?relBearing-360:relBearing);
@@ -52,7 +57,7 @@ int getDir(int x, int y){
         return dx>0?90:-90;
     else if(dx==0)
         return dy>0?0:180;
-    int basic = abs(atan2(dy,dx)/0.0174532925);
+    int basic = int(abs(atan2(dy,dx)/0.0174532925))%90;
     if(dy>0 && dx >0)
         return 90-basic;
     else if(dx<0 && dy>0)
@@ -70,7 +75,7 @@ void updateCoordinates(){
       if (stat->haveFound || true) {
  
 
-        if (i == 0){
+        /*if (i == 0){
             Serial.print("Team ");
         Serial.print(i);
         Serial.print(" ");
@@ -79,13 +84,13 @@ void updateCoordinates(){
         Serial.print(stat->y);
         Serial.print(" time since (ms): ");
         Serial.println(millis() - stat->timestamp); 
-        }
+        }*/
         
-        botCoordinates[i][0] = stat->y;
+        botCoordinates[i][0] = -stat->x;
         botCoordinates[i][1] = stat->y;  
         if (i == myTeamNumber){
            YPos = stat->y;
-           XPos = stat->x;
+           XPos = -stat->x;
   
         }
       }
@@ -104,6 +109,8 @@ void setup(){
         Serial.println("Could not find a valid HMC5883L sensor, check wiring!");
         delay(50);
     }
+    compass.setOffset(-((compXMin+compXMax)/2), -((compYMin+compYMax)/2));
+    compass.setScale((compXMax-compXMin)/2, (compYMax-compYMin)/2);
     compass.setSamples(HMC5883L_SAMPLES_4);
     bee.init(48, 49);
     
@@ -119,15 +126,16 @@ void loop(){
 
   
     updateCoordinates();
+    targetBearingOffset = getDir(targetX, targetY);
     updateBearings();
 
     if (triggeredSensor != -1){
-      Serial.print("The bot is over the line at ");
-      Serial.println(triggeredSensor);
+      //Serial.print("The bot is over the line at ");
+      //Serial.println(triggeredSensor);
       triggeredSensor = -1;
     }
-    
-    targetBearingOffset = getDir(targetX, targetY);
+    //Serial.print(XPos); Serial.print(" "); Serial.println(YPos);
+    Serial.print(trueBearing); Serial.print(" "); Serial.print(compOffset);Serial.print(" ");Serial.print(fieldBearing); Serial.print(" "); Serial.print(targetBearingOffset);Serial.print(" ");Serial.println(relBearing);
     if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
     dt = millis()-lastTime;
@@ -143,14 +151,14 @@ void loop(){
     lastTime = millis();
     lastError = relBearing;
     
-    if(abs(relBearing)>10){
-        leftMotor.runWrapper(-compAlignSpeed);
-        rightMotor.runWrapper(compAlignSpeed);
+    if(abs(relBearing)>20){
+        leftMotor.runWrapper(compAlignSpeed);
+        rightMotor.runWrapper(-compAlignSpeed);
     }
     else if(XPos!=targetX || YPos != targetY){
         motSpeed = 200;
-        leftMotor.runWrapper(motSpeed-compAlignSpeed);
-        rightMotor.runWrapper(motSpeed+compAlignSpeed);
+        leftMotor.runWrapper(-motSpeed+compAlignSpeed);
+        rightMotor.runWrapper(-motSpeed-compAlignSpeed);
     }
     else{
         leftMotor.runWrapper(0);

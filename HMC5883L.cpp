@@ -48,11 +48,11 @@ bool HMC5883L::begin()
 
     return true;
 }
-
+//modified --Neil Dhar 1/10/16
 Vector HMC5883L::readRaw(void)
 {
-    v.XAxis = readRegister16(HMC5883L_REG_OUT_X_M) - xOffset;
-    v.YAxis = readRegister16(HMC5883L_REG_OUT_Y_M) - yOffset;
+    v.XAxis = readRegister16(HMC5883L_REG_OUT_X_M);
+    v.YAxis = readRegister16(HMC5883L_REG_OUT_Y_M);
     v.ZAxis = readRegister16(HMC5883L_REG_OUT_Z_M);
 
     return v;
@@ -60,9 +60,9 @@ Vector HMC5883L::readRaw(void)
 
 Vector HMC5883L::readNormalize(void)
 {
-    v.XAxis = ((float)readRegister16(HMC5883L_REG_OUT_X_M) - xOffset) * mgPerDigit;
-    v.YAxis = ((float)readRegister16(HMC5883L_REG_OUT_Y_M) - yOffset) * mgPerDigit;
-    v.ZAxis = (float)readRegister16(HMC5883L_REG_OUT_Z_M) * mgPerDigit;
+    v.XAxis = ((float)readRegister16(HMC5883L_REG_OUT_X_M) + xOffset)/ xScale;
+    v.YAxis = ((float)readRegister16(HMC5883L_REG_OUT_Y_M) + yOffset)/yScale;
+    v.ZAxis = (float)readRegister16(HMC5883L_REG_OUT_Z_M);
 
     return v;
 }
@@ -73,6 +73,12 @@ void HMC5883L::setOffset(int xo, int yo)
     yOffset = yo;
 }
 
+void HMC5883L::setScale(int xs, int ys)
+{
+    xScale = xs;
+    yScale = ys;
+}
+//end modification
 void HMC5883L::setRange(hmc5883l_range_t range)
 {
     switch(range)

@@ -5,8 +5,8 @@
 #include "AFMotor.h"
 
 #define myTeamNumber 0 
-#define compKp 1.7
-#define compKi 0.0035
+#define compKp 4
+#define compKi 0.02
 #define compKd 0.005
 #define compXMax 280
 #define compXMin -80
@@ -23,10 +23,10 @@ int lineSensors[4] = {A15, 56, 18, 19};
 int triggeredSensor = -1; 
 int botCoordinates[4][2];
 int XPos=0, YPos=0, motSpeed, compAlignSpeed;
-double targetX=-175, targetY=103;
+double targetX=-165, targetY=110;
 //double targetX=0, targetY=0;
 double trueBearing, relBearing, fieldBearing;
-int compOffset = 180, targetBearingOffset = 0;
+int compOffset = 32, targetBearingOffset = 0;
 Vector data;
 unsigned long long lastTime;
 int lastError;
@@ -135,8 +135,8 @@ void loop(){
       //Serial.println(triggeredSensor);
       triggeredSensor = -1;
     }
-    //Serial.print(XPos); Serial.print(" "); Serial.println(YPos);
-    Serial.print(trueBearing); Serial.print(" "); Serial.print(compOffset);Serial.print(" ");Serial.print(fieldBearing); Serial.print(" "); Serial.print(targetBearingOffset);Serial.print(" ");Serial.println(relBearing);
+    Serial.print(XPos); Serial.print(" "); Serial.println(YPos);
+    //Serial.print(trueBearing); Serial.print(" "); Serial.print(compOffset);Serial.print(" ");Serial.print(fieldBearing); Serial.print(" "); Serial.print(targetBearingOffset);Serial.print(" ");Serial.println(relBearing);
     if(sign(relBearing)!=sign(lastError))
             errorTotal=0;
     dt = millis()-lastTime;
@@ -157,7 +157,7 @@ void loop(){
         rightMotor.runWrapper(-compAlignSpeed);
     }
     else if(XPos!=targetX || YPos != targetY){
-        motSpeed = 200;
+        motSpeed = 215;
         leftMotor.runWrapper((-motSpeed+2*compAlignSpeed));
         rightMotor.runWrapper((-motSpeed-2*compAlignSpeed));
     }

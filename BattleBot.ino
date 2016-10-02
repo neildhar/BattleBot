@@ -5,8 +5,8 @@
 #include "AFMotor.h"
 
 #define myTeamNumber 0 
-#define compKp 4
-#define compKi 0.02
+#define compKp 1.5
+#define compKi 0.003
 #define compKd 0.005
 #define compXMax 280
 #define compXMin -80
